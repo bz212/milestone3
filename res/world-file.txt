@@ -1,0 +1,16 @@
+# Define spaces
+space LivingRoom
+space Kitchen
+space Garden
+
+# Define players
+player Alice 100 LivingRoom
+player Bob 100 Kitchen
+
+# Define pet
+pet Rex Garden
+
+# Define neighbors
+neighbor LivingRoom Kitchen
+neighbor Kitchen Garden
+neighbor Garden LivingRoom

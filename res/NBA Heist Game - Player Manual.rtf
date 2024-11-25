@@ -1,0 +1,87 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 **NBA Heist Game - Player Manual**\
+\
+Welcome to the NBA Heist Game! This guide will help you understand the gameplay, controls, and rules so you can fully enjoy your experience as a player attempting to win over the legendary 'MJ'. Below are the essential instructions for navigating through the game.\
+\
+### 1. Game Objective\
+The goal of NBA Heist is to navigate different spaces, collect items, and ultimately attempt to defeat the target character, "MJ" (Michael Jordan). Players need to strategize, interact with their surroundings, and use their inventory to accomplish the mission.\
+\
+### 2. Starting the Game\
+To start the game, you need to launch it from the command line by specifying the world configuration file and the maximum number of turns allowed.\
+\
+**Command to start the game**:\
+```\
+java -jar NBAHeistGame.jar <world-file.txt> <max-turns>\
+```\
+Example:\
+```\
+java -jar NBAHeistGame.jar world_spec.txt 50\
+```\
+This command will load the world from `world_spec.txt` and set the maximum number of turns to 50.\
+\
+### 3. Basic Commands and Gameplay\
+Throughout the game, you will be prompted to enter commands to control your character. Here are the available commands you can use during your turn:\
+\
+- **look around**: Observe your current surroundings. This will give you information about the current space, including items and other players present.\
+  - **Example**: `look around`\
+\
+- **move [space]**: Move to an adjacent space. You need to specify the name of the target space.\
+  - **Example**: `move Kitchen`\
+\
+- **pick up [item]**: Pick up an item from the current space and add it to your inventory.\
+  - **Example**: `pick up Sword`\
+\
+- **attack [player]**: Attack another player who is in the same space. You can specify which player to attack.\
+  - **Example**: `attack Bob`\
+\
+### 4. Player Actions Explained\
+- **Look Around**: Use the `look around` command to understand who and what is in the current space. This can include items that you can pick up or other players that you may need to confront.\
+\
+- **Move**: Movement is essential for exploring the game world. You can only move to spaces directly connected to your current location. If you attempt to move to a non-adjacent space, the move will fail.\
+\
+- **Pick Up Item**: Items are critical for your survival and success. They can provide you with additional attack power or other benefits.\
+\
+- **Attack**: If you encounter another player or the target character, you can attack them using the items in your inventory. Attacks may be blocked if another player witnesses it, and only unseen attacks are successful.\
+\
+### 5. Special Features\
+- **Target Character's Pet**: The target character has a pet that moves through the game world. The pet can block players from seeing certain spaces, making it harder to plan attacks. The pet will move each turn, and its behavior affects visibility for players.\
+\
+- **Winning Conditions**:\
+  - **Victory**: A player wins by successfully defeating the target character, MJ, without being stopped by other players.\
+  - **Escape**: If the maximum number of turns is reached and the target character is still alive, the game ends, and MJ escapes.\
+\
+### 6. Example Run\
+Here is an example interaction during gameplay:\
+```\
+Alice, it's your turn!\
+Enter your command (look around, move [space], pick up [item], attack [player]):\
+> look around\
+You are currently in: Living Room\
+There are items in this space: Shield.\
+There are other players in this space: Bob.\
+\
+> move Kitchen\
+Alice moved from Living Room to Kitchen.\
+\
+> pick up Sword\
+Alice picked up Sword from Kitchen.\
+\
+> attack Bob\
+Attack attempt failed! Bob is not in the same space.\
+```\
+\
+### 7. Tips for Success\
+- **Plan Your Moves**: Always check the surrounding areas using the `look around` command before making a decision.\
+- **Pick Your Battles**: Make sure you have a good weapon before attempting to attack the target character or another player.\
+- **Avoid Being Seen**: Try to avoid attacking when other players are in adjacent spaces, as they will stop your attack.\
+\
+### 8. Ending the Game\
+The game ends when a player successfully defeats the target character, or when the maximum number of turns is reached. If the target character survives, no one wins.\
+\
+We hope this manual helps you enjoy the NBA Heist Game. Good luck, and may the best player win!}
