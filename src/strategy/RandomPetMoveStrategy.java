@@ -1,56 +1,67 @@
 package strategy;
 
+import java.util.List;
+import java.util.Random;
+import java.util.logging.Logger;
 import world.Pet;
 import world.Player;
 import world.Space;
 import world.World;
 
-import java.util.List;
-import java.util.Random;
-
 /**
  * RandomPetMoveStrategy implements a strategy where the pet moves to a random neighboring space.
  */
 public class RandomPetMoveStrategy implements MoveStrategy {
-    private Random random;
 
-    /**
-     * Initializes the RandomPetMoveStrategy with a random number generator.
-     */
-    public RandomPetMoveStrategy() {
-        this.random = new Random();
+  private static final Logger logger = Logger.getLogger(RandomPetMoveStrategy.class.getName());
+  private final Random random;
+
+  /**
+   * Constructs a RandomPetMoveStrategy with a default random generator.
+   */
+  public RandomPetMoveStrategy() {
+    this.random = new Random();
+  }
+
+  /**
+   * Random movement is not supported for players in this strategy.
+   *
+   * @param player The player attempting to move.
+   * @param world  The game world context.
+   * @return A warning message indicating the action is unsupported.
+   */
+  @Override
+  public String move(Player player, World world) {
+    logger.warning("RandomPetMoveStrategy does not support player movement.");
+    return "Player movement is not supported in RandomPetMoveStrategy.";
+  }
+
+  /**
+   * Moves the pet to a random neighboring space.
+   *
+   * @param pet   The pet to move.
+   * @param world The game world context.
+   * @return A string describing the pet's move action.
+   */
+  @Override
+  public String move(Pet pet, World world) {
+    if (pet == null) {
+      logger.warning("Pet is null.");
+      return "Error: Pet is null.";
     }
 
-    /**
-     * Moves the pet to a random neighboring space.
-     *
-     * @param pet   The pet to be moved.
-     * @param world The game world context.
-     */
-    @Override
-    public void movePet(Pet pet, World world) {
-        Space currentSpace = pet.getCurrentSpace();
-        List<Space> neighbors = currentSpace.getNeighbors();
-
-        if (neighbors.isEmpty()) {
-            System.out.println(pet.toString() + " has no neighboring spaces to move to.");
-            return;
-        }
-
-        Space nextSpace = neighbors.get(random.nextInt(neighbors.size()));
-        pet.moveTo(nextSpace);
-        System.out.println(pet.toString() + " moved to " + nextSpace.getName() + " randomly.");
+    Space currentSpace = pet.getCurrentSpace();
+    if (currentSpace == null || currentSpace.getNeighbors().isEmpty()) {
+      logger.warning("Pet has no neighboring spaces to move to.");
+      return "Error: No neighboring spaces for the pet to move to.";
     }
 
-    @Override
-    public void move(Player player, World world) {
-      // TODO Auto-generated method stub
-      
-    }
+    List<Space> neighbors = currentSpace.getNeighbors();
+    Space nextSpace = neighbors.get(random.nextInt(neighbors.size()));
 
-    @Override
-    public void move(Pet pet, World world) {
-      // TODO Auto-generated method stub
-      
-    }
+    pet.move(nextSpace);
+    String result = "Pet " + pet.getName() + " moved to " + nextSpace.getName() + " randomly.";
+    logger.info(result);
+    return result;
+  }
 }

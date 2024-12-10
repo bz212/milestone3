@@ -1,103 +1,125 @@
 package strategy;
 
-import org.junit.Before;
-import org.junit.Test;
-import world.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import world.AiPlayer;
+import world.Pet;
+import world.Player;
+import world.Space;
+import world.World;
 
 /**
- * Test class for the ChasePlayerStrategy class.
+ * Test class for ChasePlayerStrategy.
  */
 public class ChasePlayerStrategyTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Space space3;
-    private Player targetPlayer;
-    private Player chaser;
-    private ChasePlayerStrategy strategy;
 
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space1 = new Space("Garden", world);
-        space2 = new Space("Kitchen", world);
-        space3 = new Space("Living Room", world);
-        world.getSpaces().add(space1);
-        world.getSpaces().add(space2);
-        world.getSpaces().add(space3);
+  private ChasePlayerStrategy strategy;
+  private AiPlayer mockAiPlayer;
+  private Pet mockPet;
+  private Space mockSpace;
+  private World mockWorld;
+  private List<Player> mockPlayers;
 
-        // Set neighbors
-        space1.addNeighbor(space2);
-        space2.addNeighbor(space1);
-        space2.addNeighbor(space3);
-        space3.addNeighbor(space2);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    strategy = new ChasePlayerStrategy();
+    mockAiPlayer = mock(AiPlayer.class);
+    mockPet = mock(Pet.class);
+    mockSpace = mock(Space.class);
+    mockWorld = mock(World.class);
 
-        // Initialize strategy with a fixed random seed for consistent testing
-        Random random = new Random(42);
-        strategy = new ChasePlayerStrategy(random);
+    // Mock players in the world
+    mockPlayers = new ArrayList<>();
+    Player player1 = mock(Player.class);
+    Player player2 = mock(Player.class);
+    when(player1.getName()).thenReturn("Player1");
+    when(player2.getName()).thenReturn("Player2");
+    when(player1.getCurrentSpace()).thenReturn(mock(Space.class));
+    when(player2.getCurrentSpace()).thenReturn(mock(Space.class));
+    mockPlayers.add(player1);
+    mockPlayers.add(player2);
 
-        // Initialize players with strategy
-        targetPlayer = new HumanPlayer("Target Player", 100, space1);
-        chaser = new AIPlayer("Chaser", 100, space2, strategy);
-        space1.addPlayer(targetPlayer);
-        space2.addPlayer(chaser);
-    }
+    when(mockWorld.getPlayers()).thenReturn(mockPlayers);
+    when(mockAiPlayer.getCurrentSpace()).thenReturn(mockSpace);
+    when(mockPet.getCurrentSpace()).thenReturn(mockSpace);
+  }
 
-    @Test
-    public void testChaseTargetPlayer() {
-        // Execute chase strategy
-        strategy.move(chaser, world);
+  /**
+   * Tests the strategy's decision-making for an AI player.
+   */
+  @Test
+  public void testDecideActionForAiPlayer() {
+    String result = strategy.decideAction(mockAiPlayer, mockWorld);
 
-        // Verify the chaser has moved to a neighboring space
-        Space currentSpace = chaser.getCurrentSpace();
-        List<Space> neighbors = space2.getNeighbors();
+    assertNotNull(result);
+    verify(mockWorld, times(1)).getPlayers();
+    verify(mockAiPlayer, atLeastOnce()).move(any(Space.class));
+    assertTrue(result.contains("moved towards"));
+  }
 
-        assertTrue(neighbors.contains(currentSpace));
-        assertTrue(currentSpace.getPlayers().contains(chaser));
-    }
+  /**
+   * Tests the strategy's decision-making for a pet.
+   */
+  @Test
+  public void testDecideActionForPet() {
+    String result = strategy.decideAction(mockPet, mockWorld);
 
-    @Test
-    public void testChaserRemainsInWorldAfterMultipleMoves() {
-        // Move the chaser multiple times
-        for (int i = 0; i < 5; i++) {
-            strategy.move(chaser, world);
-        }
+    assertNotNull(result);
+    verify(mockWorld, times(1)).getPlayers();
+    verify(mockPet, atLeastOnce()).move(any(Space.class));
+    assertTrue(result.contains("moved towards"));
+  }
 
-        // Verify the chaser is still in the world
-        assertTrue(world.getPlayers().contains(chaser));
-    }
+  /**
+   * Tests the scenario where there are no players to chase.
+   */
+  @Test
+  public void testNoPlayersToChase() {
+    when(mockWorld.getPlayers()).thenReturn(new ArrayList<>());
 
-    @Test
-    public void testChaserDoesNotMoveIfTargetIsInSameSpace() {
-        // Move target player to the same space as the chaser
-        targetPlayer.move(space2);
+    String result = strategy.decideAction(mockAiPlayer, mockWorld);
+    assertEquals(mockAiPlayer.getName() + " has no players to chase.", result);
+  }
 
-        // Execute chase strategy
-        strategy.move(chaser, world);
+  /**
+   * Tests the scenario where there are no neighbors for the space.
+   */
+  @Test
+  public void testNoNeighbors() {
+    when(mockSpace.getNeighbors()).thenReturn(new ArrayList<>());
 
-        // Verify the chaser did not move since it is already in the same space as the target
-        assertEquals(space2, chaser.getCurrentSpace());
-    }
+    String result = strategy.decideAction(mockAiPlayer, mockWorld);
+    assertTrue(result.contains("has no valid moves"));
+  }
 
-    @Test
-    public void testChaserMovesRandomlyWhenMultipleOptions() {
-        // Add additional neighbors to test random movement
-        space1.addNeighbor(space3);
-        space3.addNeighbor(space1);
+  /**
+   * Tests the calculation of distance between two spaces.
+   */
+  @Test
+  public void testCalculateDistance() {
+    Space space1 = mock(Space.class);
+    Space space2 = mock(Space.class);
+    when(space1.getX()).thenReturn(0);
+    when(space1.getY()).thenReturn(0);
+    when(space2.getX()).thenReturn(3);
+    when(space2.getY()).thenReturn(4);
 
-        // Execute chase strategy multiple times
-        for (int i = 0; i < 5; i++) {
-            strategy.move(chaser, world);
-
-            // Verify that the chaser remains in a valid space (either kitchen, garden, or living room)
-            assertTrue(world.getSpaces().contains(chaser.getCurrentSpace()));
-        }
-    }
+    double distance = strategy.calculateDistance(space1, space2);
+    assertEquals(5.0, distance, 0.001);
+  }
 }

@@ -1,110 +1,163 @@
 package command;
 
-import org.junit.After;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
-import world.*;
-
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
+import world.Item;
+import world.Player;
+import world.Space;
+import world.World;
 
 /**
- * Test class for the LookAroundCommand class.
+ * Test class for LookAroundCommand.
  */
 public class LookAroundCommandTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Player player;
-    private Item item;
-    private LookAroundCommand command;
 
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private final PrintStream originalOut = System.out;
+  private Player mockPlayer;
+  private Space mockCurrentSpace;
+  private Space mockNeighborSpace;
+  private Item mockItem;
+  private World mockWorld;
+  private LookAroundCommand lookAroundCommand;
 
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space1 = new Space("Living Room", world);
-        space2 = new Space("Kitchen", world);
-        world.getSpaces().add(space1);
-        world.getSpaces().add(space2);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    mockPlayer = mock(Player.class);
+    mockCurrentSpace = mock(Space.class);
+    mockNeighborSpace = mock(Space.class);
+    mockItem = mock(Item.class);
+    mockWorld = mock(World.class);
 
-        // Set neighbors
-        space1.addNeighbor(space2);
+    // Mock player and space interactions
+    when(mockPlayer.getName()).thenReturn("TestPlayer");
+    when(mockPlayer.getCurrentSpace()).thenReturn(mockCurrentSpace);
+    when(mockCurrentSpace.getName()).thenReturn("Current Space");
 
-        // Initialize player and item
-        player = new HumanPlayer("Alice", 100, space1);
-        item = new Item("Book", 0, "An old dusty book.");
-        space1.addPlayer(player);
-        space1.addItem(item);
+    // Mock items and neighbors
+    when(mockItem.getName()).thenReturn("TestItem");
+    List<Item> itemsInSpace = new ArrayList<>();
+    itemsInSpace.add(mockItem);
+    when(mockCurrentSpace.getItems()).thenReturn(itemsInSpace);
 
-        // Initialize command
-        command = new LookAroundCommand(player, world);
+    List<Space> neighbors = new ArrayList<>();
+    neighbors.add(mockNeighborSpace);
+    when(mockCurrentSpace.getNeighbors()).thenReturn(neighbors);
 
-        // Redirect System.out to capture output
-        System.setOut(new PrintStream(outContent));
-    }
+    when(mockNeighborSpace.getName()).thenReturn("Neighbor Space");
+    when(mockWorld.isVisible(mockNeighborSpace)).thenReturn(true);
 
-    @After
-    public void restoreStreams() {
-        System.setOut(originalOut);
-    }
+    // Set up LookAroundCommand
+    lookAroundCommand = new LookAroundCommand(mockPlayer, mockWorld);
+  }
 
-    @Test
-    public void testExecuteLookAroundCurrentSpace() {
-        // Execute the command to look around the current space
-        command.execute();
+  /**
+   * Tests a valid look around operation.
+   */
+  @Test
+  public void testValidLookAround() {
+    assertTrue(lookAroundCommand.isValid());
 
-        // Verify the output contains information about the current space, players, and items
-        String result = outContent.toString();
-        assertTrue(result.contains("You are currently in: Living Room"));
-        assertTrue(result.contains("Items in this space: Book"));
-        assertTrue(result.contains("There are no other players in this space."));
-    }
+    lookAroundCommand.execute();
 
-    @Test
-    public void testExecuteLookAroundWithNeighboringSpaces() {
-        // Add another player to the neighboring space
-        Player neighborPlayer = new HumanPlayer("Bob", 100, space2);
-        space2.addPlayer(neighborPlayer);
+    // Verify interactions
+    verify(mockPlayer, atLeastOnce()).getCurrentSpace();
+    verify(mockCurrentSpace, atLeastOnce()).getItems();
+    verify(mockCurrentSpace, atLeastOnce()).getNeighbors();
+    verify(mockWorld).isVisible(mockNeighborSpace);
+  }
 
-        // Execute the command to look around the current space
-        command.execute();
+  /**
+   * Tests looking around with no items in the current space.
+   */
+  @Test
+  public void testLookAroundWithNoItems() {
+    when(mockCurrentSpace.getItems()).thenReturn(new ArrayList<>());
 
-        // Verify the output contains information about neighboring spaces and players
-        String result = outContent.toString();
-        assertTrue(result.contains("From here, you can see:"));
-        assertTrue(result.contains("Kitchen with no items and Bob"));
-    }
+    lookAroundCommand.execute();
 
-    @Test
-    public void testExecuteLookAroundEmptySpace() {
-        // Move player to an empty space
-        player.move(space2);
+    // Verify interactions
+    verify(mockCurrentSpace, atLeastOnce()).getItems();
+  }
 
-        // Execute the command to look around the current space
-        command.execute();
+  /**
+   * Tests looking around with an invisible neighbor space.
+   */
+  @Test
+  public void testLookAroundWithInvisibleNeighbor() {
+    when(mockWorld.isVisible(mockNeighborSpace)).thenReturn(false);
 
-        // Verify the output contains information about the current space with no players or items
-        String result = outContent.toString();
-        assertTrue(result.contains("You are currently in: Kitchen"));
-        assertTrue(result.contains("There are no items in this space."));
-        assertTrue(result.contains("There are no other players in this space."));
-    }
+    lookAroundCommand.execute();
 
-    @Test
-    public void testExecuteLookAroundNeighborWithoutItemsOrPlayers() {
-        // Execute the command to look around the current space
-        command.execute();
+    // Verify interactions
+    verify(mockWorld).isVisible(mockNeighborSpace);
+  }
 
-        // Verify the output contains information about neighboring spaces with no items or players
-        String result = outContent.toString();
-        assertTrue(result.contains("From here, you can see:"));
-        assertTrue(result.contains("Kitchen with no items and no players"));
-    }
+  /**
+   * Tests looking around with no neighbors in the current space.
+   */
+  @Test
+  public void testLookAroundWithNoNeighbors() {
+    when(mockCurrentSpace.getNeighbors()).thenReturn(new ArrayList<>());
+
+    lookAroundCommand.execute();
+
+    // Verify interactions
+    verify(mockCurrentSpace, atLeastOnce()).getNeighbors();
+  }
+
+  /**
+   * Tests looking around when the player has no current space.
+   */
+  @Test(expected = IllegalStateException.class)
+  public void testLookAroundWithNoCurrentSpace() {
+    when(mockPlayer.getCurrentSpace()).thenReturn(null);
+
+    lookAroundCommand.execute();
+  }
+
+  /**
+   * Tests the description of the LookAroundCommand.
+   */
+  @Test
+  public void testDescription() {
+    assertEquals(
+        "Look around your current space and its neighbors.",
+        lookAroundCommand.getDescription()
+    );
+  }
+
+  /**
+   * Tests executing LookAroundCommand with invalid input.
+   */
+  @Test(expected = UnsupportedOperationException.class)
+  public void testExecuteWithInput() {
+    lookAroundCommand.execute("Invalid Input");
+  }
+
+  /**
+   * Tests the constructor when the player is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructorWithNullPlayer() {
+    new LookAroundCommand(null, mockWorld);
+  }
+
+  /**
+   * Tests the constructor when the world is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructorWithNullWorld() {
+    new LookAroundCommand(mockPlayer, null);
+  }
 }

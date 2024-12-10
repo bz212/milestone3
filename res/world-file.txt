@@ -1,16 +1,74 @@
 # Define spaces
-space LivingRoom
-space Kitchen
-space Garden
+SPACE LivingRoom 0 0
+SPACE Kitchen 1 0
+SPACE Garden 2 0
+SPACE Bathroom 3 0
+SPACE Bedroom 4 0
+SPACE Gym 0 1
+SPACE LockerRoom 1 1
+SPACE MediaRoom 2 1
+SPACE Court 3 1
+SPACE Bench 4 1
+SPACE TrophyRoom 0 2
+SPACE TacticsRoom 1 2
+SPACE Office 2 2
+SPACE VideoRoom 3 2
+SPACE FansSection 4 2
+SPACE Scoreboard 0 3
+SPACE DunkZone 1 3
+SPACE FreeThrowLine 2 3
+SPACE ThreePointLine 3 3
+SPACE CoachRoom 4 3
+
+# Define items
+ITEM Sword 10 LivingRoom
+ITEM Shield 15 Kitchen
+ITEM Key 5 Bathroom
+ITEM Potion 20 Garden
+ITEM Book 8 Bedroom
+ITEM Basketball 12 Court
+ITEM Sneakers 18 Gym
+ITEM Playbook 25 TacticsRoom
+ITEM WaterBottle 10 Bench
+ITEM Trophy 30 TrophyRoom
+ITEM Clipboard 8 CoachRoom
+ITEM Jersey 15 LockerRoom
+ITEM VideoTape 20 VideoRoom
+ITEM Whistle 12 Office
+ITEM Headband 10 FansSection
+ITEM Gatorade 12 Bench
+ITEM Stopwatch 8 Scoreboard
+ITEM Medal 25 FreeThrowLine
+ITEM Ring 30 ThreePointLine
+ITEM ChampionshipTrophy 50 TrophyRoom
 
 # Define players
-player Alice 100 LivingRoom
-player Bob 100 Kitchen
+PLAYER Alice 100 LivingRoom
+PLAYER Bob 90 Kitchen
+PLAYER Charlie 80 Court
+PLAYER Danny 95 Gym
 
 # Define pet
-pet Rex Garden
+PET Rex Garden
 
 # Define neighbors
-neighbor LivingRoom Kitchen
-neighbor Kitchen Garden
-neighbor Garden LivingRoom
+NEIGHBOR LivingRoom Kitchen
+NEIGHBOR Kitchen Garden
+NEIGHBOR Garden Bathroom
+NEIGHBOR Bathroom Bedroom
+NEIGHBOR Bedroom LivingRoom
+NEIGHBOR Kitchen Court
+NEIGHBOR Court Gym
+NEIGHBOR Gym LockerRoom
+NEIGHBOR LockerRoom MediaRoom
+NEIGHBOR MediaRoom TrophyRoom
+NEIGHBOR TrophyRoom TacticsRoom
+NEIGHBOR TacticsRoom CoachRoom
+NEIGHBOR CoachRoom Office
+NEIGHBOR Office VideoRoom
+NEIGHBOR VideoRoom FansSection
+NEIGHBOR FansSection Scoreboard
+NEIGHBOR Scoreboard DunkZone
+NEIGHBOR DunkZone FreeThrowLine
+NEIGHBOR FreeThrowLine ThreePointLine
+NEIGHBOR ThreePointLine LivingRoom

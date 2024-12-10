@@ -2,75 +2,119 @@
 \cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
-\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\margl1440\margr1440\vieww11900\viewh14800\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
-\f0\fs24 \cf0 **NBA Heist Game - README**\
+\f0\fs24 \cf0 # README\
 \
-### Overview\
-NBA Heist is a turn-based strategy game where players attempt to defeat the legendary 'MJ' (Michael Jordan) by navigating various spaces, collecting items, and strategizing attacks. The game provides a unique experience through text-based interactions, where players must make strategic choices to achieve victory.\
+## **Project: NBA Heist - Milestone 4**\
 \
-### Installation\
-1. **Requirements**:\
-   - Java 8 or later.\
-   - Command line interface (Terminal, Command Prompt, etc.).\
+### **Overview**\
+This project implements a graphical user interface (GUI) for the NBA Heist game, featuring a dynamic world representation and interactive gameplay. It includes functionalities from previous milestones with enhanced visuals and user-friendly controls.\
 \
-2. **Clone or Download**:\
-   - Clone the repository from GitHub or download the ZIP file and extract it to your desired location.\
-\
-3. **Build the JAR File**:\
-   - Compile the source code and generate a JAR file using your preferred IDE (e.g., Eclipse, IntelliJ) or through the command line:\
-     ```\
-     javac -d bin src/**/*.java\
-     jar cfe NBAHeistGame.jar controller.Driver -C bin .\
-     ```\
-\
-### Running the Game\
-To start the game, use the following command:\
+### **File Structure**\
 ```\
-java -jar Milestone3 <world-file.txt> <max-turns>\
-```\
-- `<world-file.txt>`: The configuration file that defines the game world.\
-- `<max-turns>`: The maximum number of turns allowed in the game.\
+NBAHeistProject/\
+\uc0\u9500 \u9472 \u9472  src/\
+\uc0\u9474    \u9500 \u9472 \u9472  command/\
+\uc0\u9474    \u9500 \u9472 \u9472  controller/\
+\uc0\u9474    \u9500 \u9472 \u9472  renderer/\
+\uc0\u9474    \u9492 \u9472 \u9472  strategy/\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \uc0\u9474    \u9492 \u9472 \u9472  view/\
+\uc0\u9474    \u9492 \u9472 \u9472  world/\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \uc0\u9500 \u9472 \u9472  test/\
+\uc0\u9474    \u9500 \u9472 \u9472  command/\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \uc0\u9474    \u9500 \u9472 \u9472  controller/\
+\uc0\u9474    \u9500 \u9472 \u9472  renderer/\
+\uc0\u9474    \u9500 \u9472 \u9472  strategy\
+\uc0\u9474    \u9500 \u9472 \u9472  view/\
+\uc0\u9474    \u9500 \u9472 \u9472  world/\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \uc0\u9500 \u9472 \u9472  res/\
+\uc0\u9474    \u9500 \u9472 \u9472  Milestone 4 UML+TEST PLAN\
+\uc0\u9474    \u9500 \u9472 \u9472  example_runs/\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  text_mode_example.txt\
+\uc0\u9474    \u9474    \u9492 \u9472 \u9472  gui_mode_screenshots/\
+\uc0\u9474    \u9500 \u9472 \u9472  nba_heist.jar\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \uc0\u9474    \u9492 \u9472 \u9472 README.rtf\
+\uc0\u9474    \u9492 \u9472 \u9472 world-file.txt\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 ```\
 \
-**Example**:\
-```\
-java -jar Milestone3 world_spec.txt 50\
-```\
+### **How to Run**\
 \
-### Gameplay Commands\
-- **look around**: View the current space, including players and items.\
-  - Example: `look around`\
-- **move [space]**: Move to an adjacent space by specifying its name.\
-  - Example: `move Kitchen`\
-- **pick up [item]**: Pick up an item in the current space.\
-  - Example: `pick up Shield`\
-- **attack [player]**: Attack another player in the same space.\
-  - Example: `attack Bob`\
+#### **Option 1: Run the GUI Version**\
+1. Open a terminal or command prompt.\
+2. Navigate to the `res/` directory containing the `nba_heist.jar` file.\
+3. Run the following command:\
+   ```bash\
+   java -jar nba_heist.jar\
+   ```\
+4. The program will display the "About Screen." Follow the prompts to start a new game or load an existing world.\
 \
-### File Structure\
-- **src/**: Contains all source code files organized by packages.\
-- **test/**: Contains JUnit test classes for testing different components.\
-- **res/**: Includes resources like the design document, example runs, and JAR file.\
-- **README.md**: This file providing an overview and usage guide.\
+#### **Option 2: Run the Text-Based Version**\
+1. Open a terminal or command prompt.\
+2. Navigate to the `res/` directory containing the `nba_heist.jar` file.\
+3. Run the following command:\
+   ```bash\
+   java -jar nba_heist.jar <world_file> <max_turns>\
+   ```\
+   - Replace `<world_file>` with the path to your world specification file.\
+   - Replace `<max_turns>` with the maximum number of turns allowed in the game.\
 \
-### Testing\
-Tests are written using JUnit 4 and can be found in the `test/` directory. To run the tests:\
-- Use your IDE's integrated testing tools.\
-- Or use the command line:\
-  ```\
-  java -cp .:/path/to/junit.jar org.junit.runner.JUnitCore <test-class-name>\
-  ```\
+### **Key Features**\
 \
-### Example Runs\
-The `res/` directory contains example run files demonstrating various gameplay scenarios:\
-- **target_pet_effect.txt**: Shows how the pet affects visibility in the game.\
-- **human_attempt.txt**: Demonstrates a human player making an attempt on the target.\
-- **computer_win.txt**: Shows a computer-controlled player winning the game.\
+#### **GUI Features**\
+- **About Screen**: Displays welcome message, creator credits, and external resources.\
+- **Dynamic World View**:\
+  - Graphical representation of the world with player and target overlays.\
+  - Scrollable view for large worlds.\
+- **Interactive Gameplay**:\
+  - Clickable player movement.\
+  - Keyboard shortcuts for picking up items, looking around, and attacking the target.\
+  - Clear on-screen indication of the current turn and action results.\
 \
-### Tips for Success\
-- Use the `look around` command to gather information before making decisions.\
-- Be mindful of the target character's pet, which can obscure visibility and make attacks challenging.\
-- Use items strategically to increase your chances of winning.\
+#### **Text-Based Features**\
+- Supports all functionalities from previous milestones.\
+- Operates via command-line arguments and inputs.\
 \
+### **Development Notes**\
+\
+#### **Model Updates**\
+- Refactored to move logic from the text-based controller into the model.\
+- Ensured complete separation of the model from the view and controller.\
+\
+#### **Controller Updates**\
+- Redesigned to use the Command Pattern for decoupling interactions.\
+- Supports both text-based and GUI modes.\
+\
+#### **View Implementation**\
+- Built with Java Swing.\
+- Resizable JFrame supporting minimum dimensions of 300x300.\
+- Uses layout managers for flexible and responsive design.\
+\
+### **Design Documentation**\
+- **`res/design_documents.pdf`**: Includes UI sketches, UML class diagrams, and testing plans.\
+\
+### **Testing**\
+- Model and controller are thoroughly tested using JUnit 4.\
+- Tests are located in the `test/` directory, organized by package.\
+- View components are tested manually.\
+\
+### **Additional Resources**\
+- **Example Runs**:\
+  - Text mode: `res/example_runs/text_mode_example.txt`\
+  - GUI mode: `res/example_runs/gui_mode_screenshots/`\
+- **JAR File**: `res/nba_heist.jar`\
+\
+### **Known Issues**\
+- Some view elements may require manual adjustment if the screen size is very small.\
+\
+### **Future Improvements**\
+- Add animations for player and target movements.\
+- Improve accessibility features for a better user experience.\
 }

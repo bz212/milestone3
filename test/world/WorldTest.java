@@ -1,174 +1,213 @@
 package world;
 
-import org.junit.Before;
-import org.junit.Test;
-import strategy.TargetStrategy;
-import strategy.RandomMoveStrategy;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import java.util.Arrays;
+import org.junit.Before;
+import org.junit.Test;
+import strategy.RandomMoveStrategy;
+import strategy.RandomTargetStrategy;
+import strategy.TargetStrategy;
 
 /**
  * Test class for the World class.
  */
 public class WorldTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Player player1;
-    private Player player2;
-    private Item item1;
-    private Item item2;
 
-    @Before
-    public void setUp() {
-        // Initialize spaces
-        List<Space> spaces = new ArrayList<>();
-        space1 = new Space("Living Room", null);
-        space2 = new Space("Kitchen", null);
-        spaces.add(space1);
-        spaces.add(space2);
+  private World world;
+  private Space space1;
+  private Space space2;
+  private Item sword;
+  private Item shield;
+  private Player player1;
+  private Player player2;
+  private Pet pet;
 
-        // Initialize items
-        List<Item> items = new ArrayList<>();
-        item1 = new Item("Sword", 10, "A sharp blade.");
-        item2 = new Item("Shield", 5, "A protective shield.");
-        items.add(item1);
-        items.add(item2);
+  /**
+   * Sets up the test environment by initializing the world, spaces, items, players, and pets.
+   */
+  @Before
+  public void setUp() {
+    // Step 1: Initialize spaces
+    space1 = new Space("Living Room", 0, 0, null);
+    space2 = new Space("Kitchen", 1, 0, null);
 
-        // Initialize players
-        player1 = new HumanPlayer("Alice", 100, space1);
-        player2 = new HumanPlayer("Bob", 100, space2);
-        List<Player> players = new ArrayList<>();
-        players.add(player1);
-        players.add(player2);
+    // Step 2: Initialize items
+    sword = new Item("Sword", 15, "A sharp blade.");
+    shield = new Item("Shield", 10, "A sturdy shield.");
+    space1.addItem(sword);
+    space2.addItem(shield);
 
-        // Initialize world
-        world = new World(spaces, items, player1, null, new RandomMoveStrategy());
-        space1.setWorld(world);
-        space2.setWorld(world);
+    // Step 3: Initialize players
+    player1 = new HumanPlayer("Alice", 100, space1);
+    player2 = new HumanPlayer("Bob", 90, space2);
 
-        // Add players to their initial spaces
-        space1.addPlayer(player1);
-        space2.addPlayer(player2);
-    }
+    // Step 4: Initialize pet
+    pet = new Pet("Dog", space1, new RandomTargetStrategy());
 
-    @Test
-    public void testAddAndRemoveItems() {
-        // Add item to the world
-        world.addItem(item1);
-        assertTrue(world.getItems().contains(item1));
+    // Step 5: Initialize world
+    world = new World(
+        new ArrayList<>(Arrays.asList(space1, space2)),
+        new ArrayList<>(Arrays.asList(sword, shield)),
+        player1,
+        new ArrayList<>(Arrays.asList(player1, player2)),
+        new RandomTargetStrategy(),
+        20
+    );
 
-        // Remove item from the world
-        world.removeItem(item1);
-        assertFalse(world.getItems().contains(item1));
-    }
+    // Step 6: Set world references
+    space1.setWorld(world);
+    space2.setWorld(world);
 
-    @Test
-    public void testAddAndRemovePlayer() {
-        // Create a new player
-        Player player3 = new HumanPlayer("Charlie", 100, space1);
+    // Step 7: Add objects to world
+    world.addSpace(space1);
+    world.addSpace(space2);
+    world.addPlayer(player1);
+    world.addPlayer(player2);
+  }
 
-        // Add player to space
-        space1.addPlayer(player3);
-        assertTrue(space1.containsPlayer(player3));
+  /**
+   * Tests initializing the world.
+   */
+  @Test
+  public void testInitializeWorld() {
+    assertNotNull(world.getSpaces());
+    assertNotNull(world.getPlayers());
+    assertNotNull(world.getTarget());
+    assertEquals(2, world.getSpaces().size());
+    assertEquals(2, world.getPlayers().size());
+  }
 
-        // Remove player from space
-        space1.removePlayer(player3);
-        assertFalse(space1.containsPlayer(player3));
-    }
+  /**
+   * Tests moving a player to a valid space.
+   */
+  @Test
+  public void testMovePlayer() {
+    boolean moved = world.movePlayer("Kitchen");
+    assertTrue(moved);
+    assertEquals(space2, player1.getCurrentSpace());
+  }
 
-    @Test
-    public void testMovePet() {
-        Pet pet = new Pet("Rex", space1, new RandomMoveStrategy());
-        TargetStrategy strategy = new RandomMoveStrategy();
-        world = new World(world.getSpaces(), world.getItems(), player1, pet, strategy);
-        pet.setWorld(world);
+  /**
+   * Tests attempting to move a player to an invalid space.
+   */
+  @Test
+  public void testMovePlayerInvalidSpace() {
+    boolean moved = world.movePlayer("Garage");
+    assertFalse(moved);
+  }
 
-        // Move the pet
-        world.movePet();
-        assertNotNull(pet.getCurrentSpace());
-        assertTrue(world.getSpaces().contains(pet.getCurrentSpace()));
-    }
+  /**
+   * Tests picking up an item from a space.
+   */
+  @Test
+  public void testPickUpItem() {
+    space1.addItem(sword);
+    boolean pickedUp = world.pickUpItem("Sword");
+    assertTrue(pickedUp);
+    assertTrue(player1.getInventory().contains(sword));
+    assertFalse(space1.getItems().contains(sword));
+  }
 
-    @Test
-    public void testPlayerPickUpItem() {
-        // Add item to space1 and ensure it's also in the world
-      space1.addItem(item1);
-      if (!world.getItems().contains(item1)) {
-          world.addItem(item1);  // Ensure item is both in the space and the world
+  /**
+   * Tests attempting to pick up an item that does not exist.
+   */
+  @Test
+  public void testPickUpItemNotFound() {
+    boolean pickedUp = world.pickUpItem("Bow");
+    assertFalse(pickedUp);
+  }
 
-          assertTrue(space1.getItems().contains(item1));
-          assertTrue(world.getItems().contains(item1));
+  /**
+   * Tests attacking another player.
+   */
+  @Test
+  public void testAttackPlayer() {
+    String result = world.attackPlayer("Bob");
+    assertEquals("Bob attacked successfully!", result);
+    assertEquals(80, player2.getHealth());
+  }
 
-          // Player picks up the item
-          world.playerPickUpItem(player1, item1);
+  /**
+   * Tests attempting to attack a player that does not exist.
+   */
+  @Test
+  public void testAttackPlayerNotFound() {
+    String result = world.attackPlayer("Charlie");
+    assertEquals("Attack failed: Player not found.", result);
+  }
 
-          // Verify the item is no longer in the space or the world
-          assertFalse(space1.getItems().contains(item1));
-          assertFalse(world.getItems().contains(item1));
+  /**
+   * Tests checking if the game is over.
+   */
+  @Test
+  public void testIsGameOver() {
+    player1.reduceHealth(100);
+    player2.reduceHealth(90);
+    assertTrue(world.isGameOver());
+  }
 
-          // Verify that the item is now in the player's inventory
-          assertTrue(player1.getInventory().contains(item1));
-      }
-    }
+  /**
+   * Tests checking if the game is not over.
+   */
+  @Test
+  public void testIsGameOverNotOver() {
+    assertFalse(world.isGameOver());
+  }
 
-    @Test
-    public void testGetPlayers() {
-        List<Player> players = world.getPlayers();
-        assertEquals(2, players.size());
-        assertTrue(players.contains(player1));
-        assertTrue(players.contains(player2));
-    }
+  /**
+   * Tests looking around the current space and its surroundings.
+   */
+  @Test
+  public void testLookAround() {
+    space1.addItem(sword);
+    space2.addItem(shield);
+    String worldState = world.lookAround();
+    assertTrue(worldState.contains("Living Room"));
+    assertTrue(worldState.contains("Sword"));
+    assertTrue(worldState.contains("Kitchen"));
+    assertTrue(worldState.contains("Shield"));
+  }
 
-    @Test
-    public void testIsVisible() {
-        assertTrue(world.isVisible(space1));
-        assertTrue(world.isVisible(space2));
-    }
+  /**
+   * Tests getting the name of a space at specific coordinates.
+   */
+  @Test
+  public void testGetSpaceNameAt() {
+    assertEquals("Living Room", world.getSpaceNameAt(0, 0));
+    assertEquals("Kitchen", world.getSpaceNameAt(1, 0));
+  }
 
-    @Test
-    public void testSetSpaces() {
-        List<Space> newSpaces = new ArrayList<>();
-        Space space3 = new Space("Garden", null);
-        newSpaces.add(space3);
-        world.setSpaces(newSpaces);
-        assertEquals(1, world.getSpaces().size());
-        assertTrue(world.getSpaces().contains(space3));
-    }
+  /**
+   * Tests getting the name of a space at invalid coordinates.
+   */
+  @Test
+  public void testGetSpaceNameAtInvalidCoordinates() {
+    assertNull(world.getSpaceNameAt(2, 2));
+  }
 
-    @Test
-    public void testSetPlayers() {
-        List<Player> newPlayers = new ArrayList<>();
-        Player player3 = new HumanPlayer("Charlie", 100, space2);
-        newPlayers.add(player3);
-        world.setPlayers(newPlayers);
-        assertEquals(1, world.getPlayers().size());
-        assertTrue(world.getPlayers().contains(player3));
-    }
+  /**
+   * Tests getting the status of all players in the world.
+   */
+  @Test
+  public void testGetPlayerStatus() {
+    String status = world.getPlayerStatus();
+    assertTrue(status.contains("Alice"));
+    assertTrue(status.contains("Health: 100"));
+  }
 
-    @Test
-    public void testSetStrategy() {
-        TargetStrategy strategy = new RandomMoveStrategy();
-        world.setStrategy(strategy);
-        assertNotNull(world.getStrategy());
-        assertEquals(strategy, world.getStrategy());
-    }
-
-    @Test
-    public void testEmptyWorldInitialization() {
-        World emptyWorld = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        assertTrue(emptyWorld.getSpaces().isEmpty());
-        assertTrue(emptyWorld.getPlayers().isEmpty());
-    }
-
-    @Test
-    public void testAddDuplicateItem() {
-        world.addItem(item1);
-        world.addItem(item1); // Attempt to add the same item again
-        long itemCount = world.getItems().stream().filter(i -> i.equals(item1)).count();
-        assertEquals(1, itemCount);
-    }
+  /**
+   * Tests setting and getting the strategy for the world.
+   */
+  @Test
+  public void testSetAndGetStrategy() {
+    TargetStrategy newStrategy = new RandomMoveStrategy();
+    world.setStrategy(newStrategy);
+    assertEquals(newStrategy, world.getStrategy());
+  }
 }

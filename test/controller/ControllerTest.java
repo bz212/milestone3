@@ -1,142 +1,161 @@
 package controller;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import command.Command;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 import org.junit.Before;
 import org.junit.Test;
-import world.*;
-import command.*;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import view.View;
+import world.WorldModel;
 
 /**
- * Test class for the Controller class.
+ * Unit tests for the Controller class, ensuring all functionalities
+ * are working correctly and meet project requirements.
  */
 public class ControllerTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Player player1;
-    private Player player2;
-    private Controller controller;
 
-    /**
-     * Sets up the initial game world, spaces, players, and controller before each test.
-     */
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space1 = new Space("Living Room", world);
-        space2 = new Space("Kitchen", world);
-        world.getSpaces().add(space1);
-        world.getSpaces().add(space2);
+  private Controller controller;
+  private WorldModel mockModel;
+  private View mockView;
 
-        // Initialize players
-        player1 = new HumanPlayer("Alice", 100, space1);
-        player2 = new HumanPlayer("Bob", 100, space2);
-        space1.addPlayer(player1);
-        space2.addPlayer(player2);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    mockModel = mock(WorldModel.class);
+    mockView = mock(View.class);
+    controller = new Controller(mockModel, mockView);
+  }
 
-        // Initialize controller with players and world
-        List<Player> players = new ArrayList<>();
-        players.add(player1);
-        players.add(player2);
-        controller = new Controller(players, world);  // Adding world parameter to the controller
-    }
+  /**
+   * Tests handling key input for the "Look Around" action.
+   */
+  @Test
+  public void testKeyInputLookAround() {
+    KeyEvent mockKeyEvent = mock(KeyEvent.class);
+    when(mockKeyEvent.getKeyCode()).thenReturn(KeyEvent.VK_L);
+    when(mockModel.lookAround()).thenReturn("You see a basketball and sneakers.");
+    
+    controller.handleKeyInput(mockKeyEvent);
 
-    /**
-     * Tests adding a new player to the game.
-     */
-    @Test
-    public void testAddPlayer() {
-        // Add a new player to the game
-        Player newPlayer = new HumanPlayer("Charlie", 100, space1);
-        controller.addPlayer(newPlayer);
+    verify(mockModel, times(1)).lookAround();
+    verify(mockView, times(1)).updateGameState("You see a basketball and sneakers.");
+  }
 
-        // Verify the player was added
-        assertEquals(3, controller.getPlayers().size());
-        assertTrue(controller.getPlayers().contains(newPlayer));
-    }
+  /**
+   * Tests handling key input for the "Move Player" action.
+   */
+  @Test
+  public void testKeyInputMove() {
+    KeyEvent mockKeyEvent = mock(KeyEvent.class);
+    when(mockKeyEvent.getKeyCode()).thenReturn(KeyEvent.VK_M);
 
-    /**
-     * Tests moving a player to a new space using the controller.
-     */
-    @Test
-    public void testMovePlayer() {
-        // Move player1 to a new space using the controller
-        MoveCommand moveCommand = new MoveCommand(player1, space2);
-        assertTrue(moveCommand.isValid());  // Ensure command is valid before executing
-        controller.executeCommand(moveCommand);
+    doAnswer(invocation -> {
+      Consumer<String> callback = invocation.getArgument(1);
+      callback.accept("CourtSide");
+      return null;
+    }).when(mockView).showPrompt(eq("Enter space name to move:"), any());
 
-        // Verify player1 has moved to space2
-        assertEquals(space2, player1.getCurrentSpace());
-        assertFalse(space1.getPlayers().contains(player1));
-        assertTrue(space2.getPlayers().contains(player1));
-    }
+    when(mockModel.movePlayer("CourtSide")).thenReturn(true);
 
-    /**
-     * Tests player picking up an item from the current space using the controller.
-     */
-    @Test
-    public void testPlayerPicksUpItem() {
-        // Add item to space1
-        Item item = new Item("Shield", 15, "A protective shield.");
-        space1.addItem(item);
+    controller.handleKeyInput(mockKeyEvent);
 
-        // Player1 picks up the item using the controller
-        PickUpItemCommand pickUpItemCommand = new PickUpItemCommand(player1, item);
-        assertTrue(pickUpItemCommand.isValid());  // Ensure command is valid before executing
-        controller.executeCommand(pickUpItemCommand);
+    verify(mockModel, times(1)).movePlayer("CourtSide");
+    verify(mockView, times(1)).updateGameState("Player moved to CourtSide");
+  }
 
-        // Verify player1 has the item in their inventory
-        assertTrue(player1.getInventory().contains(item));
-        assertFalse(space1.getItems().contains(item));
-    }
+  /**
+   * Tests handling key input for the "Pick Up Item" action.
+   */
+  @Test
+  public void testKeyInputPickUpItem() {
+    KeyEvent mockKeyEvent = mock(KeyEvent.class);
+    when(mockKeyEvent.getKeyCode()).thenReturn(KeyEvent.VK_P);
 
-    /**
-     * Tests player attempting to attack another player using the controller.
-     */
-    @Test
-    public void testPlayerAttemptsAttack() {
-        // Player1 attempts to attack Player2
-        Item weapon = new Item("Dagger", 10, "A sharp dagger.");
-        player1.pickUpItem(weapon);
-        AttemptAttackCommand attackCommand = new AttemptAttackCommand(player1, player2, weapon);
-        assertTrue(attackCommand.isValid());  // Ensure command is valid before executing
-        controller.executeCommand(attackCommand);
+    when(mockModel.pickUpItem("Jersey")).thenReturn(true);
 
-        // Verify player2's health is reduced
-        assertEquals(90, player2.getHealth());
-    }
+    controller.handleKeyInput(mockKeyEvent);
 
-    /**
-     * Tests the look around command to verify the player's ability to observe their surroundings.
-     */
-    @Test
-    public void testLookAroundCommand() {
-        // Player1 looks around the current space
-        LookAroundCommand lookAroundCommand = new LookAroundCommand(player1, world);
-        assertTrue(lookAroundCommand.isValid());  // Ensure command is valid before executing
-        controller.executeCommand(lookAroundCommand);
+    verify(mockModel, times(1)).pickUpItem(anyString());
+    verify(mockView, times(1)).updateGameState(anyString());
+  }
 
-        // Verify the description includes relevant information
-        String description = player1.getCurrentSpace().getDescription();
-        assertTrue(description.contains("Living Room"));
-        assertTrue(description.contains("Alice"));
-    }
+  /**
+   * Tests handling mouse click for a valid space.
+   */
+  @Test
+  public void testMouseClickValidSpace() {
+    MouseEvent mockMouseEvent = mock(MouseEvent.class);
+    when(mockMouseEvent.getX()).thenReturn(100);
+    when(mockMouseEvent.getY()).thenReturn(200);
+    when(mockView.getSpaceAt(100, 200)).thenReturn("CourtSide");
 
-    /**
-     * Tests invalid move attempts by trying to move to a non-adjacent space.
-     */
-    @Test
-    public void testInvalidMovePlayer() {
-        // Create a space that is not adjacent
-        Space space3 = new Space("Bathroom", world);
-        world.getSpaces().add(space3);
+    when(mockModel.movePlayer("CourtSide")).thenReturn(true);
 
-        // Attempt to move player1 to a non-adjacent space
-        MoveCommand moveCommand = new MoveCommand(player1, space3);
-        assertFalse(moveCommand.isValid());  // Ensure command is invalid
-    }
+    controller.handleMouseClick(mockMouseEvent);
+
+    verify(mockModel, times(1)).movePlayer("CourtSide");
+  }
+
+  /**
+   * Tests successful execution of a command.
+   */
+  @Test
+  public void testCommandExecutionSuccess() throws Exception {
+    Command mockCommand = mock(Command.class);
+    when(mockCommand.isValid()).thenReturn(true);
+    controller.getCommands().put("look", mockCommand);
+
+    controller.executeCommand("look");
+
+    verify(mockCommand, times(1)).execute();
+  }
+
+  /**
+   * Tests execution failure of a command and error handling.
+   */
+  @Test
+  public void testCommandExecutionFailure() throws Exception {
+    Command mockCommand = mock(Command.class);
+    when(mockCommand.isValid()).thenReturn(true);
+    doThrow(new RuntimeException("Execution failed")).when(mockCommand).execute();
+    controller.getCommands().put("look", mockCommand);
+
+    controller.executeCommand("look");
+
+    verify(mockView, times(1)).displayMessage("Error executing command: Execution failed");
+  }
+
+  /**
+   * Tests the game over condition.
+   */
+  @Test
+  public void testGameOver() {
+    when(mockModel.isGameOver()).thenReturn(true); // Mock game over condition
+    boolean result = controller.isGameOver();
+    verify(mockModel, times(1)).isGameOver();
+    assertTrue(result);
+  }
+
+  /**
+   * Tests starting the controller and showing the welcome screen.
+   */
+  @Test
+  public void testStart() {
+    controller.start();
+    verify(mockView).showWelcomeScreen();
+  }
 }

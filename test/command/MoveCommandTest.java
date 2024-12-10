@@ -1,77 +1,122 @@
 package command;
 
-import org.junit.Before;
-import org.junit.Test;
-import world.*;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import view.View;
+import world.Player;
+import world.Space;
+import world.WorldModel;
+
 
 /**
- * Test class for the MoveCommand class.
+ * Test class for MoveCommand.
  */
 public class MoveCommandTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Player player;
-    private MoveCommand command;
 
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space1 = new Space("Living Room", world);
-        space2 = new Space("Kitchen", world);
-        world.getSpaces().add(space1);
-        world.getSpaces().add(space2);
+  private Player mockPlayer;
+  private Space mockCurrentSpace;
+  private Space mockTargetSpace;
+  private MoveCommand moveCommand;
+  private WorldModel mockModel;
+  private View mockView;
 
-        // Set neighbors
-        space1.addNeighbor(space2);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    mockPlayer = mock(Player.class);
+    mockCurrentSpace = mock(Space.class);
+    mockTargetSpace = mock(Space.class);
+    mockModel = mock(WorldModel.class);
+    mockView = mock(View.class);
 
-        // Initialize player
-        player = new HumanPlayer("Alice", 100, space1);
-        space1.addPlayer(player);
+    // Setup mock interactions
+    when(mockPlayer.getCurrentSpace()).thenReturn(mockCurrentSpace);
+    List<Space> neighbors = new ArrayList<>();
+    neighbors.add(mockTargetSpace);
+    when(mockCurrentSpace.getNeighbors()).thenReturn(neighbors);
+    when(mockTargetSpace.getName()).thenReturn("Target Space");
 
-        // Initialize command
-        command = new MoveCommand(player, space2);
-    }
+    // Create a MoveCommand instance
+    moveCommand = new MoveCommand(mockPlayer, mockTargetSpace);
+  }
 
-    @Test
-    public void testExecutePlayerMoved() {
-        // Execute command to move the player
-        command.execute();
+  /**
+   * Tests executing a valid move command.
+   */
+  @Test
+  public void testExecute_ValidMove() {
+    assertTrue(moveCommand.isValid());
+    moveCommand.execute();
+    verify(mockPlayer).move(mockTargetSpace);
+  }
 
-        // Verify the player has moved to the new space
-        assertEquals(space2, player.getCurrentSpace());
-        assertFalse(space1.getPlayers().contains(player));
-        assertTrue(space2.getPlayers().contains(player));
-    }
+  /**
+   * Tests executing an invalid move command.
+   */
+  @Test
+  public void testExecute_InvalidMove() {
+    // Modify neighbors to make the move invalid
+    List<Space> emptyNeighbors = new ArrayList<>();
+    when(mockCurrentSpace.getNeighbors()).thenReturn(emptyNeighbors);
 
-    @Test
-    public void testExecutePlayerCannotMoveToNonNeighborSpace() {
-        // Create a non-neighbor space
-        Space space3 = new Space("Garden", world);
-        world.getSpaces().add(space3);
+    assertFalse(moveCommand.isValid());
+    moveCommand.execute();
+    verify(mockPlayer, never()).move(mockTargetSpace);
+  }
 
-        // Attempt to move player to a non-neighbor space
-        command = new MoveCommand(player, space3);
-        command.execute();
+  /**
+   * Tests retrieving the description of the move command.
+   */
+  @Test
+  public void testGetDescription() {
+    assertEquals("Move to Target Space", moveCommand.getDescription());
+  }
 
-        // Verify the player did not move
-        assertEquals(space1, player.getCurrentSpace());
-        assertFalse(space3.getPlayers().contains(player));
-    }
+  /**
+   * Tests executing the move command with invalid input.
+   */
+  @Test(expected = UnsupportedOperationException.class)
+  public void testExecute_WithInput() {
+    moveCommand.execute("Invalid Input");
+  }
 
-    @Test
-    public void testExecutePlayerAlreadyInTargetSpace() {
-        // Attempt to move player to the same space they are already in
-        command = new MoveCommand(player, space1);
-        command.execute();
+  /**
+   * Tests the MoveCommand constructor with model and view.
+   */
+  @Test
+  public void testConstructor_WithModelAndView() {
+    when(mockModel.getCurrentPlayer()).thenReturn(mockPlayer);
+    when(mockView.getSelectedSpace()).thenReturn(mockTargetSpace);
 
-        // Verify the player is still in the same space
-        assertEquals(space1, player.getCurrentSpace());
-        assertTrue(space1.getPlayers().contains(player));
-    }
+    MoveCommand command = new MoveCommand(mockModel, mockView);
+    assertTrue(command.isValid());
+  }
+
+  /**
+   * Tests the MoveCommand constructor when the player is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullPlayer() {
+    new MoveCommand(null, mockTargetSpace);
+  }
+
+  /**
+   * Tests the MoveCommand constructor when the target space is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullTargetSpace() {
+    new MoveCommand(mockPlayer, null);
+  }
 }

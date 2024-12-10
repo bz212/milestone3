@@ -1,76 +1,110 @@
 package strategy;
 
-import org.junit.Before;
-import org.junit.Test;
-import world.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import world.Pet;
+import world.Space;
+import world.World;
 
 /**
- * Test class for the DepthFirstMoveStrategy class.
+ * Test class for DepthFirstMoveStrategy.
  */
 public class DepthFirstMoveStrategyTest {
-    private World world;
-    private Space space1;
-    private Space space2;
-    private Space space3;
-    private Player player;
-    private DepthFirstMoveStrategy strategy;
 
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space1 = new Space("Entrance", world);
-        space2 = new Space("Hallway", world);
-        space3 = new Space("Chamber", world);
-        world.getSpaces().add(space1);
-        world.getSpaces().add(space2);
-        world.getSpaces().add(space3);
+  private DepthFirstMoveStrategy strategy;
+  private Pet mockPet;
+  private Space mockCurrentSpace;
+  private Space mockNeighborSpace;
+  private World mockWorld;
 
-        // Set neighbors for depth-first traversal
-        space1.addNeighbor(space2);
-        space2.addNeighbor(space3);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    strategy = new DepthFirstMoveStrategy();
+    mockPet = mock(Pet.class);
+    mockCurrentSpace = mock(Space.class);
+    mockNeighborSpace = mock(Space.class);
+    mockWorld = mock(World.class);
 
-        // Initialize player and strategy
-        strategy = new DepthFirstMoveStrategy();
-        player = new HumanPlayer("Explorer", 100, space1);
-        space1.addPlayer(player);
-    }
+    // Set up mock neighbors
+    List<Space> neighbors = new ArrayList<>();
+    neighbors.add(mockNeighborSpace);
+    when(mockCurrentSpace.getNeighbors()).thenReturn(neighbors);
 
-    @Test
-    public void testDepthFirstMove() {
-        // Execute depth-first move
-        strategy.move(player, world);
+    // Set up initial pet space
+    when(mockPet.getCurrentSpace()).thenReturn(mockCurrentSpace);
+    when(mockNeighborSpace.getName()).thenReturn("Neighbor Space");
+  }
 
-        // Verify the player has moved to the next space in depth-first order
-        assertEquals(space2, player.getCurrentSpace());
-        assertTrue(space1.getPlayers().isEmpty());
-        assertTrue(space2.getPlayers().contains(player));
-    }
+  /**
+   * Tests moving the pet to the next space.
+   */
+  @Test
+  public void testMoveToNextSpace() {
+    String result = strategy.decideAction(mockPet, mockWorld);
 
-    @Test
-    public void testPlayerMovesThroughAllSpaces() {
-        // Move the player through all the spaces in depth-first order
-        strategy.move(player, world); // Move to space2
-        strategy.move(player, world); // Move to space3
+    verify(mockCurrentSpace, times(1)).getNeighbors();
+    verify(mockPet, times(1)).move(mockNeighborSpace);
+    assertNotNull(result);
+    assertTrue(result.contains("moved to Neighbor Space"));
+  }
 
-        // Verify player is now in the last space
-        assertEquals(space3, player.getCurrentSpace());
-        assertTrue(space3.getPlayers().contains(player));
-    }
+  /**
+   * Tests the behavior of backtracking when all neighbors are visited.
+   */
+  @Test
+  public void testBacktrackBehavior() {
+    // Simulate all neighbors being visited
+    when(mockCurrentSpace.getNeighbors()).thenReturn(new ArrayList<>());
 
-    @Test
-    public void testPlayerRemainsInWorldAfterMultipleMoves() {
-        // Move the player multiple times
-        for (int i = 0; i < 5; i++) {
-            strategy.move(player, world);
-        }
+    String result = strategy.decideAction(mockPet, mockWorld);
+    verify(mockPet, never()).move(any(Space.class));
+    assertTrue(result.contains("backtracked"));
+  }
 
-        // Verify the player is still in the world
-        assertTrue(world.getPlayers().contains(player));
-    }
+  /**
+   * Tests the scenario where there are no spaces left to explore.
+   */
+  @Test
+  public void testNoSpacesToExplore() {
+    when(mockCurrentSpace.getNeighbors()).thenReturn(new ArrayList<>());
+    when(mockPet.getCurrentSpace()).thenReturn(null);
+
+    String result = strategy.decideAction(mockPet, mockWorld);
+    verify(mockPet, never()).move(any(Space.class));
+    assertTrue(result.contains("has no more spaces to explore"));
+  }
+
+  /**
+   * Tests the moveTarget method which is not supported by this strategy.
+   */
+  @Test
+  public void testMoveTargetNotSupported() {
+    String result = strategy.moveTarget(null, mockWorld);
+    assertEquals("DepthFirstMoveStrategy does not support player movement.", result);
+  }
+
+  /**
+   * Tests logging messages during strategy actions.
+   */
+  @Test
+  public void testLoggingMessages() {
+    strategy.decideAction(mockPet, mockWorld);
+
+    // Ensure no exceptions occur; log messages can be checked manually if needed
+  }
 }

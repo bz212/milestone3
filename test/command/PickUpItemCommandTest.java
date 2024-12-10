@@ -1,74 +1,127 @@
 package command;
 
-import org.junit.Before;
-import org.junit.Test;
-import world.*;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import view.View;
+import world.Item;
+import world.Player;
+import world.Space;
+import world.WorldModel;
 
 /**
- * Test class for the PickUpItemCommand class.
+ * Test class for PickUpItemCommand.
  */
 public class PickUpItemCommandTest {
-    private World world;
-    private Space space;
-    private Player player;
-    private Item item;
-    private PickUpItemCommand command;
 
-    @Before
-    public void setUp() {
-        // Initialize world and spaces
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space = new Space("Living Room", world);
-        world.getSpaces().add(space);
+  private Player mockPlayer;
+  private Item mockItem;
+  private Space mockCurrentSpace;
+  private PickUpItemCommand pickUpItemCommand;
+  private WorldModel mockModel;
+  private View mockView;
 
-        // Initialize player and item
-        player = new HumanPlayer("Alice", 100, space);
-        item = new Item("Magic Wand", 5, "A wand with magical powers.");
-        space.addItem(item);
-        space.addPlayer(player);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    mockPlayer = mock(Player.class);
+    mockItem = mock(Item.class);
+    mockCurrentSpace = mock(Space.class);
+    mockModel = mock(WorldModel.class);
+    mockView = mock(View.class);
 
-        // Initialize command
-        command = new PickUpItemCommand(player, item);
-    }
+    // Setup mock interactions
+    when(mockPlayer.getCurrentSpace()).thenReturn(mockCurrentSpace);
+    List<Item> mockItems = new ArrayList<>();
+    mockItems.add(mockItem);
+    when(mockItem.getName()).thenReturn("Magic Sword");
 
-    @Test
-    public void testExecuteItemPickedUp() {
-        // Execute command to pick up the item
-        command.execute();
+    // Create a PickUpItemCommand instance
+    pickUpItemCommand = new PickUpItemCommand(mockPlayer, mockItem);
+  }
 
-        // Verify the item is now in the player's inventory and no longer in the space
-        assertTrue(player.getInventory().contains(item));
-        assertFalse(space.getItems().contains(item));
-    }
+  /**
+   * Tests a valid pick-up action.
+   */
+  @Test
+  public void testExecute_ValidPickUp() {
+    assertTrue(pickUpItemCommand.isValid());
+    pickUpItemCommand.execute();
 
-    @Test
-    public void testExecuteItemNotInSpace() {
-        // Remove the item from the space
-        space.removeItem(item);
+    verify(mockPlayer).pickUpItem(mockItem);
+    verify(mockCurrentSpace).removeItem(mockItem);
+  }
 
-        // Execute command to pick up the item
-        command.execute();
+  /**
+   * Tests an invalid pick-up action where the item is not available.
+   */
+  @Test
+  public void testExecute_InvalidPickUp() {
+    List<Item> emptyItems = new ArrayList<>();
+    when(mockCurrentSpace.getItems()).thenReturn(emptyItems);
 
-        // Verify the item was not added to the player's inventory
-        assertFalse(player.getInventory().contains(item));
-    }
+    assertFalse(pickUpItemCommand.isValid());
+    pickUpItemCommand.execute();
 
-    @Test
-    public void testExecutePlayerNotInSpace() {
-        // Move player to a different space
-        Space otherSpace = new Space("Kitchen", world);
-        world.getSpaces().add(otherSpace);
-        player.move(otherSpace);
+    verify(mockPlayer, never()).pickUpItem(mockItem);
+    verify(mockCurrentSpace, never()).removeItem(mockItem);
+  }
 
-        // Execute command to pick up the item
-        command.execute();
+  /**
+   * Tests the description of the PickUpItemCommand.
+   */
+  @Test
+  public void testGetDescription() {
+    assertEquals(
+        "Pick up Magic Sword from the current space.",
+        pickUpItemCommand.getDescription()
+    );
+  }
 
-        // Verify the item is still in the original space and not in the player's inventory
-        assertTrue(space.getItems().contains(item));
-        assertFalse(player.getInventory().contains(item));
-    }
+  /**
+   * Tests executing PickUpItemCommand with invalid input.
+   */
+  @Test(expected = UnsupportedOperationException.class)
+  public void testExecute_WithInput() {
+    pickUpItemCommand.execute("Invalid Input");
+  }
+
+  /**
+   * Tests the PickUpItemCommand constructor with model and view.
+   */
+  @Test
+  public void testConstructor_WithModelAndView() {
+    when(mockModel.getCurrentPlayer()).thenReturn(mockPlayer);
+    when(mockView.getSelectedItem()).thenReturn(mockItem);
+
+    PickUpItemCommand command = new PickUpItemCommand(mockModel, mockView);
+    assertTrue(command.isValid());
+  }
+
+  /**
+   * Tests the PickUpItemCommand constructor when the player is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullPlayer() {
+    new PickUpItemCommand(null, mockItem);
+  }
+
+  /**
+   * Tests the PickUpItemCommand constructor when the item is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullItem() {
+    new PickUpItemCommand(mockPlayer, null);
+  }
 }

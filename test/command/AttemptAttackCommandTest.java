@@ -1,95 +1,161 @@
 package command;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
-import world.*;
-
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
+import world.Item;
+import world.Player;
+import world.Space;
 
 /**
- * Test class for the AttemptAttackCommand class.
+ * Test class for AttemptAttackCommand.
  */
 public class AttemptAttackCommandTest {
-    private World world;
-    private Space space;
-    private Player attacker;
-    private Player target;
-    private Item weapon;
-    private AttemptAttackCommand command;
 
-    @Before
-    public void setUp() {
-        // Initialize world and space
-        world = new World(new ArrayList<>(), new ArrayList<>(), null, null, null);
-        space = new Space("Battlefield", world);
-        world.getSpaces().add(space);
+  private Player mockAttacker;
+  private Player mockTarget;
+  private Item mockWeapon;
+  private Space mockSpace;
+  private AttemptAttackCommand attackCommand;
 
-        // Initialize players and weapon
-        attacker = new HumanPlayer("Attacker", 100, space);
-        target = new HumanPlayer("Target", 100, space);
-        weapon = new Item("Sword", 20, "A sharp blade.");
-        space.addPlayer(attacker);
-        space.addPlayer(target);
-        attacker.pickUpItem(weapon);
+  /**
+   * Sets up the test environment before each test.
+   */
+  @Before
+  public void setUp() {
+    mockAttacker = mock(Player.class);
+    mockTarget = mock(Player.class);
+    mockWeapon = mock(Item.class);
+    mockSpace = mock(Space.class);
 
-        // Set visibility to false to allow attack to succeed
-        attacker.setCanSee(target, false); 
+    when(mockAttacker.getName()).thenReturn("Attacker");
+    when(mockTarget.getName()).thenReturn("Target");
+    when(mockWeapon.getName()).thenReturn("Sword");
+    when(mockWeapon.getDamage()).thenReturn(10);
+    when(mockAttacker.getCurrentSpace()).thenReturn(mockSpace);
+    when(mockTarget.getCurrentSpace()).thenReturn(mockSpace);
+    when(mockAttacker.getHealth()).thenReturn(50);
+    when(mockTarget.getHealth()).thenReturn(30);
 
-        // Initialize command
-        command = new AttemptAttackCommand(attacker, target, weapon);
-    }
+    attackCommand = new AttemptAttackCommand(mockAttacker, mockTarget, mockWeapon);
+  }
 
-    @Test
-    public void testExecuteSuccessfulAttack() {
-        // Execute the attack command
-        command.execute();
+  /**
+   * Tests a valid attack using a weapon.
+   */
+  @Test
+  public void testValidAttack_WithWeapon() {
+    assertTrue(attackCommand.isValid());
+    attackCommand.execute();
 
-        // Verify the target's health is reduced by the weapon's damage
-        assertEquals(80, target.getHealth());
-    }
+    verify(mockTarget).reduceHealth(10);
+    verify(mockAttacker.getInventory()).removeItem(mockWeapon);
+  }
 
-    @Test
-    public void testExecuteAttackWithoutWeapon() {
-        // Remove weapon from attacker
-        attacker.getInventory().remove(weapon);
+  /**
+   * Tests a valid attack without a weapon.
+   */
+  @Test
+  public void testValidAttack_NoWeapon() {
+    attackCommand = new AttemptAttackCommand(mockAttacker, mockTarget);
 
-        // Reinitialize the command without a weapon
-        command = new AttemptAttackCommand(attacker, target);
+    assertTrue(attackCommand.isValid());
+    attackCommand.execute();
 
-        // Execute the attack command
-        command.execute();
+    verify(mockTarget).reduceHealth(1);
+    verify(mockAttacker.getInventory(), never()).removeItem(any());
+  }
 
-        // Verify the target's health is reduced by the default damage (1 point)
-        assertEquals(99, target.getHealth());
-    }
+  /**
+   * Tests an attack that defeats the target.
+   */
+  @Test
+  public void testAttack_TargetDefeated() {
+    when(mockTarget.getHealth()).thenReturn(1);
 
-    @Test
-    public void testExecuteAttackSeenByOtherPlayer() {
-        // Add another player to witness the attack
-        Player witness = new HumanPlayer("Witness", 100, space);
-        space.addPlayer(witness);
+    assertTrue(attackCommand.isValid());
+    attackCommand.execute();
 
-        // Execute the attack command
-        command.execute();
+    verify(mockTarget).reduceHealth(1);
+  }
 
-        // Verify the attack was stopped (target's health remains unchanged)
-        assertEquals(100, target.getHealth());
-    }
+  /**
+   * Tests an invalid attack when the players are in different spaces.
+   */
+  @Test
+  public void testInvalidAttack_DifferentSpaces() {
+    when(mockTarget.getCurrentSpace()).thenReturn(mock(Space.class));
 
+    assertFalse(attackCommand.isValid());
+    attackCommand.execute();
 
-    @Test
-    public void testExecuteAttackWhenTargetNotInSameSpace() {
-        // Move target to another space
-        Space otherSpace = new Space("Safe Room", world);
-        world.getSpaces().add(otherSpace);
-        target.move(otherSpace);
+    verify(mockTarget, never()).reduceHealth(anyInt());
+  }
 
-        // Execute the attack command
-        command.execute();
+  /**
+   * Tests an invalid attack when the attacker is dead.
+   */
+  @Test
+  public void testInvalidAttack_AttackerDead() {
+    when(mockAttacker.getHealth()).thenReturn(0);
 
-        // Verify the attack did not occur (target's health remains unchanged)
-        assertEquals(100, target.getHealth());
-    }
+    assertFalse(attackCommand.isValid());
+    attackCommand.execute();
+
+    verify(mockTarget, never()).reduceHealth(anyInt());
+  }
+
+  /**
+   * Tests an invalid attack when the target is dead.
+   */
+  @Test
+  public void testInvalidAttack_TargetDead() {
+    when(mockTarget.getHealth()).thenReturn(0);
+
+    assertFalse(attackCommand.isValid());
+    attackCommand.execute();
+
+    verify(mockTarget, never()).reduceHealth(anyInt());
+  }
+
+  /**
+   * Tests the description of the attack command.
+   */
+  @Test
+  public void testGetDescription() {
+    assertEquals("Attempt an attack on the target.", attackCommand.getDescription());
+  }
+
+  /**
+   * Tests executing the attack command with invalid input.
+   */
+  @Test(expected = UnsupportedOperationException.class)
+  public void testExecute_WithInput() {
+    attackCommand.execute("Invalid Input");
+  }
+
+  /**
+   * Tests the constructor when the attacker is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullAttacker() {
+    new AttemptAttackCommand(null, mockTarget, mockWeapon);
+  }
+
+  /**
+   * Tests the constructor when the target is null.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testConstructor_NullTarget() {
+    new AttemptAttackCommand(mockAttacker, null, mockWeapon);
+  }
 }
